@@ -25,6 +25,11 @@ module.exports = () => {
         alias: "ns",
         description: "Don't schedule any session / score removal"
     })
+    .option("test-service", {
+        type: "string",
+        alias: "ts",
+        description: "Path to test service run"
+    })
     .demandCommand()
     .showHelpOnFail()
     .parse()

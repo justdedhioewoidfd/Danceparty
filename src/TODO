@@ -1,1 +1,0 @@
-Logger fails to determine global.ENV because its called before ENV is set, for non dev envs log level will always be debug

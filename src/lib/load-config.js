@@ -31,21 +31,21 @@ const gs = Joi
         REGIONS: Joi.array().items(region).required()
     }).unknown(true);
 
-module.exports.gs = (cb) => {
+module.exports.gs = () => {
     const gsConfig = require("../config");
   
     const gsVal = gs.validate(gsConfig);
     if (gsVal.error) return cb(`Couldn't verify Gameserver config: ${gsVal.error}`);
 
-    return cb(null, gsVal.value);
+    return gsVal.value;
 };
 
-module.exports.service = (service, cb) => {
+module.exports.service = (service) => {
     const confPath = path.resolve(service.base, "config.js");
     
     if (!fs.existsSync(confPath)) 
         return cb("Service doesn't have a config file, please create one!");
 
     const serviceConfig = require(confPath);
-    return cb(null, serviceConfig);
+    return serviceConfig;
 };

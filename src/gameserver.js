@@ -3,6 +3,7 @@
  */
 
 // Register aliases
+require("dotenv").config();
 require("./aliases")();
 
 // see TODO #1
@@ -12,9 +13,11 @@ const fs = require("fs");
 const path = require("path");
 const http = require("http");
 const async = require("async");
-const dotenv = require("dotenv");
 const logger = require("logger")("gameserver");
 const migrateDb = require("./migrate-db");
+        
+const dbClient = require("./lib/clients/db-client");
+const redisClient = require("./lib/clients/redis-client");
 
 global.logger = logger;
 
@@ -32,110 +35,67 @@ let serviceConfig;
 // 5. Initalize any client the service requires
 // 6. Start the service and define configs under global for easy access
 // It's all confusing at the moment, which will be improved in future
-async.waterfall(
-    [
-        (cb) => {
-            // Start CLI progress
-            const args = require("./cli")();
-            global.args = args;
-            return cb(null, args);
-        },
-        (args, cb) => {
-            // Load Gameserver configuration
-            dotenv.config(); // Resolve env file
+(async() => {
+    // Start CLI progress
+    const args = require("./cli")();
+    global.args = args;
 
-            require("./lib/load-config").gs((err, conf) => {
-                if (err) return cb(err);
-                config = conf;
-                return cb(null, args);
-            });
-        },
-        (args, cb) => {
-            // Set service information
-            service = config.SERVICES[args.service];
-            service.path = path.resolve(__dirname, service.path);
-            service.base = path.resolve(__dirname, path.dirname(service.path));
+    // Load gameserver configuration
+    config = require("./lib/load-config").gs();
 
-            // Load service's configuration
-            require("./lib/load-config").service(service, (err, conf) => {
-                if (err) return cb(err);
-                serviceConfig = conf;
-                return cb(null, args);
-            });
-        },
-        (args, cb) => {
-            // Set ENV and PORT
-            global.ENV = args.env || process.env.ENV || serviceConfig.ENV || "local";
-            global.PORT = args.port || process.env.PORT || serviceConfig.PORT || 5000;
-            return cb();
-        },
-        (cb) => {
-            // Initate clients before proceeding
-            logger.info("Initalizing clients...");
+    // Set service information
+    service = config.SERVICES[args.service];
+    service.path = path.resolve(__dirname, service.path);
+    service.base = path.resolve(__dirname, path.dirname(service.path));
 
-            // Database
-            if (service.clients.includes("db")) {
-                let connectionUri = process.env.DB_URI || config.DATABASE[service.id][global.ENV];
-                require("./lib/clients/db-client")(connectionUri, (err, ok) => {
-                    if (err) return cb(err);
-                    logger.success("Connected to Database client!");
-                });
-            };
-            if (service.clients.includes("memcached")) {
-                require("./lib/clients/memcached-client")((err, ok) => {
-                    if (err) return cb(err);
-                    logger.success("Connected to Memcached client!");
-                });
-            };
-            if (service.clients.includes("maxmind")) {
-                require("./lib/clients/maxmind-client")((err, ok) => {
-                    if (err) return cb(err);
-                    logger.success("Connected to Maxmind client!");
-                });
-            };
-            logger.success("Initalized all clients!");
-            return cb();
-        },
-        (cb) => {
-            return cb();
-            // If DB exists, call database migration
-            if (service.clients.includes("db")) {
-                migrateDb.migrateSongs((err, ok) => {
-                    if (err) return cb(err);
-                    if (ok) logger.success("Migrated songs successfully!");
-                    return cb();
-                })
-            }
-            else return cb();
-        },
-        (cb) => {
-            // Initate provided service
-            const base = service.base;
-            const script = service.path;
+    // Load service configuration
+    serviceConfig = require("./lib/load-config").service(service);
 
-            logger.info(`Starting service ${service.name}...`);
+    // Set ENV and PORT
+    global.ENV = args.env || process.env.ENV || serviceConfig.ENV || "local";
+    global.PORT = args.port || process.env.PORT || serviceConfig.PORT || 5000;
 
-            // - Set globals
-            global.service = service;
-            global.secrets = config.SECRETS;
-            // Service
-            global.config = serviceConfig;
-            global.config.service = global.service;
-            global.gs = config;
-            // -
-            global.project = require("../package.json");
-            
-            const app = require(script);
-            return cb(null, app)
-        },
-        (app, cb) => {
-            // Start the service
-            app.listen(global.PORT, "127.0.0.1");
-            logger.success(`Service ${service.name} is listening on port ${global.PORT} in '${global.ENV}' enviroment successfully!`);
-            return cb();
-        }
-    ],
-    function (err) {
-        if (err) throw new Error(err);
+    const clients = service.clients || [];
+
+    // If service has any clients, initalize them
+    if (clients.length > 0) {
+        logger.info("Initalizing clients...");
+
+        const dbURI = process.env.DB_URI || config.DATABASE[service.id][global.ENV];
+        const redisURI = process.env.REDIS_URI || config.REDIS[service.id][global.ENV];
+
+        if (clients.includes("db"))
+            await dbClient(dbURI);
+            global.logger.info("Initalized Database client!");
+        
+        if (clients.includes("redis"))
+            await redisClient(redisURI);
+            global.logger.info("Initalized Redis client!");
+
+        logger.success("Initalized all clients!");
     }
-);
+
+    // DB migration here TODO
+
+    // Initate provided service
+    logger.info(`Starting service ${service.name}...`);
+
+    // Set globals for service and gs
+    global.config = serviceConfig;
+    global.config.service = global.service;
+    global.service = service;
+    global.gs = config;
+    global.secrets = config.SECRETS;
+    global.project = require("../package.json");
+    
+    // Call service and bind to the port
+    if (args.testService) {
+        require(args.testService)();
+        logger.success("Started test service!");
+        return;
+    }
+    
+    const app = require(service.path);
+    app.listen(global.PORT, "127.0.0.1");
+    logger.success(`Service ${service.name} is listening on port ${global.PORT} in '${global.ENV}' enviroment successfully!`);
+})();

@@ -434,7 +434,11 @@ const locs = {
     },
     Devd: {
         en: "devd"
-    }
+    },
+    Stream: { en: "Stream" },
+    Legacy: { en: "Legacy" },
+    Less: { en: "LESSERAFIM" },
+    Ive: { en: "IVE" }
 };
 
 const list = [
@@ -455,12 +459,14 @@ const list = [
     [locs.Fire, locs.Ice],
     [locs.Earth, locs.Wind],
     [locs.Princess, locs.Knight],
-    [locs.RiiConnect24, locs.WiiLink],
-    [locs.Top, locs.Bottom],
+    // [locs.RiiConnect24, locs.WiiLink],
+    // [locs.Top, locs.Bottom],
     [locs.Jennie, locs.Lisa],
     [locs.JDU, locs.JDP],
     [locs.Chaos, locs.Order],
     [locs.Cardi, locs.Nicki],
+    [locs.Legacy, locs.Stream],
+    [locs.Ive, locs.Less],
     // [locs.Rama, locs.Devd]
 ];
 

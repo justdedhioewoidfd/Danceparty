@@ -1,15 +1,17 @@
 
 const mongoose = require("mongoose");
 
-module.exports = (url, cb) => {
+module.exports = async (url) => {
     try {
         if (!url) throw new Error(`Database did not receive any connection url!`)
+        
         mongoose.set('strictQuery', false);
-        mongoose.connect(url, {});
+        await mongoose.connect(url, {});
+
         global.dbClient = mongoose.connection.getClient();
-        return cb();
+        return;
     }
     catch(err) {
-        return cb(err)
+        throw new Error(err);
     }
 }

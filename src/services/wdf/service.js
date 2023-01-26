@@ -73,6 +73,8 @@ app.use(mids.notFound);
         const playlist = new Playlist(version);
         const wdfBots = new Bots(version);
 
+        return;
+
         // Reset playlist and set a new one
         await playlist.resetScreens();
         await playlist.getStatus();

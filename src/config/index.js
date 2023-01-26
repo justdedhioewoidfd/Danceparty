@@ -17,6 +17,7 @@ module.exports.AVATARS = require("./avatars");
 module.exports.COUNTRIES = require("./countries");
 
 module.exports.SECRETS = require("./secrets");
+module.exports.REDIS = require("./redis");
 module.exports.DATABASE = require("./database"); // Database loaded here but service and env are configured in service config
 module.exports.SERVICES = {
 
@@ -31,7 +32,7 @@ module.exports.SERVICES = {
         id: "wdf",
         name: "WDF",
         path: "services/wdf/service.js",
-        clients: ["db", "memcached"],
+        clients: ["db", "redis"],
         isWdf: true
     },
     // ---
