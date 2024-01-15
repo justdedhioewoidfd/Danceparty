@@ -83,7 +83,7 @@ const games = [
         ported: false,
         mod: false,
         shop: true,
-        wdf: false,
+        wdf: true,
         wdfName: "jd5",
         stats: {},
         maxStars: 5,
