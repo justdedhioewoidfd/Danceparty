@@ -165,9 +165,11 @@ class Playlist {
         // Before syncing, make sure to cancel next's scheduled rotation & reset score
         // because there is a bug where if we sync next, playlist will go fine
         // and in middle of the song, the playlist will rotate because of the schedule
-        next.jobs.forEach(job => {
-            scheduler.cancelJob(job)
-        });
+        if(next.jobs){
+            next.jobs.forEach(job => {
+                scheduler.cancelJob(job)
+            });
+        }
         // Compute next's timing and sync it to "now"
         next = this.syncScreen(next, now);
         // Re-schedule "next" after deleting its off-sync rotation job
