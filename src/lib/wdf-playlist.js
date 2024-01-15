@@ -165,9 +165,11 @@ class Playlist {
         // Before syncing, make sure to cancel next's scheduled rotation & reset score
         // because there is a bug where if we sync next, playlist will go fine
         // and in middle of the song, the playlist will rotate because of the schedule
-        next.jobs.forEach(job => {
-            scheduler.cancelJob(job)
-        });
+        if(next.jobs){
+            next.jobs.forEach(job => {
+                scheduler.cancelJob(job)
+            });
+        }
         // Compute next's timing and sync it to "now"
         next = this.syncScreen(next, now);
         // Re-schedule "next" after deleting its off-sync rotation job
@@ -176,7 +178,7 @@ class Playlist {
 
         // Create a new next with the base time from next 
         // (we pass "next" as argument to make sure it's in sync)
-        const newScreen = await this.createScreen(NEXT, next);
+        const newScreen = await this.createScreen(NEXT, next, true);
 
         global.logger.info({
             msg: `Rotated screens for ${this.version}: ${now}`,
@@ -249,7 +251,7 @@ class Playlist {
         else return {};
     }
 
-    async createScreen(type, prevScreen) {
+    async createScreen(type, prevScreen, noNew) {
         const { prev, cur, next } = await this.getScreens(false);
 
         const now = time.milliseconds();
@@ -330,9 +332,11 @@ class Playlist {
         screen.timing = timing;
         screen.timingProgramming = timingProgramming;
 
-        // Schedule the next rotation
-        const jobs = this.scheduleScreen(screen);
-        screen.jobs = jobs;
+        // Schedule the next rotation if fix isn't applied
+        if(!noNew){
+            const jobs = this.scheduleScreen(screen);
+            screen.jobs = jobs;
+        }
         
         // Update history for no repetation!
         await this.updateHistory(map);
