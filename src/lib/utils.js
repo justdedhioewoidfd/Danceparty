@@ -35,7 +35,7 @@ class Utils {
      * @returns {Boolean}
      */
     isDev(env = global.ENV) {
-        return ["dev", "local", "uat", "docker", "test", "beta", "qc"].includes(env.toLowerCase());
+        return ["dev", "local", "uat", "docker", "test", "beta"].includes(env.toLowerCase());
     }
 
     /**

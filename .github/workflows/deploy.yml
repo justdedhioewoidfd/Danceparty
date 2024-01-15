@@ -35,5 +35,4 @@ jobs:
           git status
           npm install
           pm2 restart ecosystem.config.js --env prod
-          pm2 restart ecosystem.config.js --env qc
           service nginx restart
