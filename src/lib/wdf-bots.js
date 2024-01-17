@@ -42,6 +42,7 @@ class Bots {
                     avatar,
                     name,
                     country,
+                    skill: Math.random(),
                     rank: onlinescore
                 },
                 isBot: true
@@ -96,7 +97,6 @@ class Bots {
                 totalScore: 0,
                 isBot: true
             };
-    
             const prevScore = await this.score.getScore(sessionId);
             // If user does not have a score entry, create an entry with score as 0
             if (!prevScore) {
@@ -120,19 +120,40 @@ class Bots {
                 "bad": [0, 0],
                 "ok": [1, 120],
                 "good": [120, 200],
-                "perfect": [200, 400]
+                "perfect": [230, 430]
             };
             let feedback = "";
 
             const d = Math.random();
-            if (d < 0.5)
-                feedback = ("perfect");
-            else if (d < 0.7)
-                feedback = ("ok");
-            else if (d < 0.6)
-                feedback = ("bad");
-            else
-                feedback = ("good");
+            const fprofile = botData.profile;
+            if(fprofile.skill > 0.8 || !fprofile.skill){ // easy
+                if (d < 0.05)
+                    feedback = ("perfect");
+                else if (d < 0.8)
+                    feedback = ("bad");
+                else if (d < 0.7)
+                    feedback = ("ok");
+                else
+                    feedback = ("good");
+            } else if (fprofile.skill < 0.3){ // hard
+                if (d < 0.425)
+                    feedback = ("perfect");
+                else if (d < 0.8)
+                    feedback = ("ok");
+                else if (d < 0.7)
+                    feedback = ("bad");
+                else
+                    feedback = ("good");
+            } else { // normal
+                if (d < 0.25)
+                    feedback = ("perfect");
+                else if (d < 0.6)
+                    feedback = ("ok");
+                else if (d < 0.45)
+                    feedback = ("bad");
+                else
+                    feedback = ("good");
+            }
             
             // Add the score and totalScore
             let score = utils.randomNumber(scoreRange[feedback][0], scoreRange[feedback][1]);

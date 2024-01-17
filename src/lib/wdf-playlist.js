@@ -12,6 +12,21 @@ const PREV = "prev";
 const CUR = "cur";
 const NEXT = "next";
 
+const setKeys = (keys) => { // attempt to cache all keys in parallel, basically simultaneously
+    const promises = Object.entries(keys).map(([key, value]) => {
+        return new Promise((resolve, reject) => {
+            cache.set(key, value, 0, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    });
+    return Promise.all(promises);
+};
+
 class Playlist {
     constructor(version) {
         this.version = version;
@@ -197,9 +212,19 @@ class Playlist {
             }, null, 2));
         }
 
-        await cache.set(this.keys.prev, cur);
-        await cache.set(this.keys.cur, next);
-        await cache.set(this.keys.next, newScreen);
+        const keys = {
+            [this.keys.prev]: cur,
+            [this.keys.cur]: next,
+            [this.keys.next]: newScreen
+        };
+        
+        setKeys(keys)
+            .then(() => {
+                global.logger.info("Cached new screens");
+            })
+            .catch((err) => {
+                throw new Error(`Error while putting rotation in cache: ${err}`);
+            });
     }
 
     /**
