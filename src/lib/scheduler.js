@@ -43,7 +43,7 @@ class Scheduler {
         const def = `update bot score ${sid}`;
         this.agenda.define(def, fn);
         await this.agenda.start();
-        await this.agenda.every("5 seconds", def);
+        await this.agenda.every("2 seconds", def);
     }
 
     /**
